@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Remote Config Example</title>
+  <script type="module">
+    localStorage.setItem('debug_mode', 'true');
+
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getRemoteConfig, fetchAndActivate, getValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-remote-config.js';
+    import { getAnalytics, setUserProperties } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    import { logEvent } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_XWKCaaGYTdMZx0Rkqhev5AFM16eeqUA",
+      authDomain: "printer-ios.firebaseapp.com",
+      projectId: "printer-ios",
+      storageBucket: "printer-ios.appspot.com", // ✅ Fixed
+      messagingSenderId: "142319866083",
+      appId: "1:142319866083:web:a65a07524c5c8d01f575d6",
+      measurementId: "G-YD416FKYX0"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    // Setup Analytics + set user properties
+    const analytics = getAnalytics(app);
+    setUserProperties(analytics, {
+      hai_user_type: "3", // ✅ Value must be string
+      current_app_version: "1" // ✅ Value must be string
+
+    });
+
+// 👇 Kích hoạt một event để session bắt đầu
+logEvent(analytics, 'page_view_test', {
+  page_location: window.location.href
+});
+
+    // Enable DebugView testing (optional)
+    localStorage.setItem('debug_mode', 'true');
+
+    // Setup Remote Config
+    const remoteConfig = getRemoteConfig(app);
+    remoteConfig.settings = {
+      minimumFetchIntervalMillis: 0 // dev mode: always fetch latest
+    };
+
+    // Default values
+    remoteConfig.defaultConfig = {
+      test_advertisements: 'Welcome!',
+      china_storeConfigs1: "",
+      user_segment_name: "",
+      china_user_segment_name: ""
+    };
+
+    // 🎲 50/50 random selection
+
+    const PARAM_KEYS = ['test_advertisements', "china_storeConfigs1", "china_user_segment_name"];
+
+    // Fetch and display Remote Config values
+    fetchAndActivate(remoteConfig)
+      .then(() => {
+        const result = {};
+        PARAM_KEYS.forEach(key => {
+          result[key] = getValue(remoteConfig, key).asString();
+        });
+        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+      })
+      .catch((err) => {
+        document.getElementById('output').textContent = 'Failed to fetch config: ' + err;
+      });
+  </script>
+</head>
+<body>
+  <h1>Firebase Remote Config - All Parameters</h1>
+  <pre id="output">Fetching...</pre>
+</body>
+</html>
